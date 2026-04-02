@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HF • Bijus</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+
+<style>
+body {
+    margin: 0;
+    font-family: 'Poppins', sans-serif;
+    background: linear-gradient(135deg, #fbceb7, #d86d9c, #a4a2cc);
+}
+
+/* HEADER COM LOGO */
+.topo {
+    background: #d86d9c;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    padding: 15px;
+}
+
+/* LOGO */
+.logo {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+/* TEXTO */
+.topo h1 {
+    font-family: 'Great Vibes', cursive;
+    font-size: 38px;
+    margin: 0;
+}
+
+/* BOTÕES CONTATO */
+.contato {
+    text-align: center;
+    margin: 15px;
+}
+
+/* GRID */
+.container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 20px;
+    padding: 20px;
+}
+
+/* CARD */
+.card {
+    background: white;
+    border-radius: 15px;
+    padding: 15px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.card::before {
+    content: "";
+    position: absolute;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(120deg, transparent, rgba(255,255,255,0.6), transparent);
+    animation: brilho 3s infinite;
+}
+
+@keyframes brilho {
+    0% { left: -100%; }
+    100% { left: 100%; }
+}
+
+.card img {
+    width: 100%;
+    height: 150px;
+    border-radius: 10px;
+    cursor: pointer;
+}
+
+.price {
+    color: #fbceb7;
+    font-weight: bold;
+}
+
+button {
+    background: #a4a2cc;
+    color: white;
+    border: none;
+    padding: 8px;
+    border-radius: 10px;
+    cursor: pointer;
+}
+
+/* CARRINHO */
+.cart-icon {
+    position: fixed;
+    bottom: 15px;
+    right: 15px;
+    background: #d86d9c;
+    color: white;
+    padding: 10px 15px;
+    border-radius: 50px;
+    z-index: 10000;
+}
+
+.overlay {
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.4);
+    display: none;
+    z-index: 9998;
+}
+
+.cart-box {
+    position: fixed;
+    bottom: -100%;
+    width: 100%;
+    background: white;
+    border-radius: 20px 20px 0 0;
+    padding: 20px;
+    transition: 0.4s;
+    z-index: 9999;
+}
+
+.cart-box.open {
+    bottom: 0;
+}
+
+/* MODAL */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 10001;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.8);
+}
+
+.modal img {
+    display: block;
+    margin: 10% auto;
+    max-width: 80%;
+}
+</style>
+</head>
+
+<body>
+
+<!-- HEADER COM LOGO -->
+<header class="topo">
+    <img src="logo.png" class="logo">
+    <h1>HF • Bijus 🩷</h1>
+</header>
+
+<!-- BOTÕES -->
+<div class="contato">
+    <button onclick="irWhats()">📲 WhatsApp</button>
+    <button onclick="irInsta()">📸 Instagram</button>
+</div>
+
+<div class="overlay" id="overlay" onclick="fecharCarrinho()"></div>
+
+<div class="cart-icon" onclick="abrirCarrinho()">
+🛒 R$ <span id="totalIcon">0</span>
+</div>
+
+<div class="cart-box" id="cartBox">
+<h3>Seu Carrinho 🩷</h3>
+<div id="cartItems"></div>
+<div id="total"></div>
+<button onclick="finalizar()">Finalizar 📲</button>
+<button onclick="limpar()">Limpar ❌</button>
+</div>
+
+<div class="modal" id="modal">
+<span onclick="fecharModal()" style="position:absolute;top:20px;right:30px;color:white;font-size:30px;cursor:pointer;">✖</span>
+<img id="imgGrande">
+</div>
+
+<div class="container">
+
+<script>
+const produtos = [
+["Pulseira",5,"produto1.png"],
+["Colar",20,"produto2.png"],
+["Brinco",5,"produto3.png"],
+["Bracelete",15,"produto4.png"],
+["Chaveiro",10,"produto5.png"],
+["Tornozeleira",12.5,"produto6.png"],
+["Macrame",12.5,"produto7.png"],
+["Cordinha Celular",10,"produto8.png"],
+["Conjunto Pulseiras",5,"produto9.png"],
+["Pulseira simples",5,"produto9.png"],
+];
+
+document.write(produtos.map(p => `
+<div class="card">
+<img src="${p[2]}" onclick="abrirImagem('${p[2]}')">
+<h3>${p[0]}</h3>
+<p class="price">R$ ${p[1]}</p>
+<button onclick="add('${p[0]}', ${p[1]})">Adicionar</button>
+</div>
+`).join(""));
+</script>
+
+</div>
+
+<script>
+let carrinho = JSON.parse(localStorage.getItem("carrinho")) || [];
+
+function salvar(){localStorage.setItem("carrinho",JSON.stringify(carrinho));}
+
+function add(nome,preco){
+carrinho.push({nome,preco});
+salvar();atualizar();
+}
+
+function atualizar(){
+let total=0,lista="";
+carrinho.forEach((i,idx)=>{
+total+=i.preco;
+lista+=`<div>${i.nome} - R$ ${i.preco} <span onclick="remover(${idx})">❌</span></div>`;
+});
+cartItems.innerHTML=lista;
+totalIcon.innerText=total;
+total.innerText="Total: R$ "+total;
+}
+
+function remover(i){carrinho.splice(i,1);salvar();atualizar();}
+function limpar(){carrinho=[];salvar();atualizar();}
+
+function abrirCarrinho(){
+cartBox.classList.add("open");
+overlay.style.display="block";
+}
+
+function fecharCarrinho(){
+cartBox.classList.remove("open");
+overlay.style.display="none";
+}
+
+function finalizar(){
+let msg="Olá, quero comprar:\n";
+carrinho.forEach(i=>msg+=i.nome+"\n");
+window.open("https://wa.me/553891580022?text="+encodeURIComponent(msg));
+}
+
+function abrirImagem(src){
+modal.style.display="block";
+imgGrande.src=src;
+}
+
+function fecharModal(){
+modal.style.display="none";
+}
+
+function irWhats(){
+window.open("https://wa.me/553891580022");
+}
+
+function irInsta(){
+window.open("https://www.instagram.com/hf_arteebijus");
+}
+
+atualizar();
+</script>
+
+</body>
+  </html>
